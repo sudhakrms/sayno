@@ -95,41 +95,83 @@
       transform: none;
     }
 
-    .response-area {
-      margin-top: 1.8rem;
-      padding: 1.2rem 1rem 0;
+    .history {
+      margin-top: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      max-height: 50vh;
+      overflow-y: auto;
+      padding: 0 0.25rem;
+    }
+
+    .history::-webkit-scrollbar {
+      width: 4px;
+    }
+    .history::-webkit-scrollbar-thumb {
+      background: rgba(0,0,0,0.15);
+      border-radius: 2px;
+    }
+
+    .excuse-card {
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(8px);
+      border-radius: 14px;
+      padding: 1rem 1.2rem;
+      text-align: left;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
       opacity: 0;
-      transform: translateY(8px);
-      transition: opacity 0.5s ease, transform 0.5s ease;
-      display: none;
+      transform: translateY(12px) scale(0.97);
+      animation: cardIn 0.4s ease forwards;
+      position: relative;
     }
 
-    .response-area.visible {
-      display: block;
+    @keyframes cardIn {
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    .response-area.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .response-area .reason {
-      font-size: 1.15rem;
-      line-height: 1.7;
+    .excuse-card .reason {
+      font-size: 1.05rem;
+      line-height: 1.6;
       font-style: italic;
-      background: linear-gradient(180deg, #e91e63 0%, #b0677a 40%, #78909c 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: #546e7a;
       font-weight: 500;
+      margin-right: 2rem;
     }
 
-    .response-area.error .reason {
-      background: linear-gradient(180deg, #e57373, #b0677a);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    .excuse-card .copy-btn {
+      position: absolute;
+      top: 0.7rem;
+      right: 0.7rem;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.1rem;
+      opacity: 0.4;
+      transition: opacity 0.2s, transform 0.15s;
+      padding: 0.2rem;
+    }
+
+    .excuse-card .copy-btn:hover {
+      opacity: 1;
+      transform: scale(1.15);
+    }
+
+    .excuse-card.error .reason {
+      color: #e57373;
       font-style: normal;
+    }
+
+    .counter {
+      margin-top: 1.2rem;
+      font-size: 0.85rem;
+      color: #90a4ae;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .counter.visible {
+      opacity: 1;
     }
   </style>
 </head>
@@ -140,23 +182,77 @@
 
     <button class="btn-no" id="sayNoBtn">Say No</button>
 
-    <div class="response-area" id="responseCard">
-      <div class="reason" id="reasonText"></div>
-    </div>
+    <div class="counter" id="counter"></div>
+    <div class="history" id="history"></div>
   </div>
 
   <script>
     const btn = document.getElementById('sayNoBtn');
-    const card = document.getElementById('responseCard');
-    const reasonText = document.getElementById('reasonText');
+    const history = document.getElementById('history');
+    const counter = document.getElementById('counter');
     const emoji = document.getElementById('emoji');
+
+    const fallbacks = [
+      "I'd love to, but I have a very important meeting with my couch.",
+      "Sorry, my cat specifically requested I stay home today.",
+      "I can't — I'm teaching my goldfish to swim backwards.",
+      "I would, but I just found out I'm allergic to plans.",
+      "My horoscope said to avoid commitments today.",
+      "I promised myself I'd do absolutely nothing, and I'm a person of my word.",
+      "I have to return some videotapes.",
+      "I'm on a strict no-fun diet this week.",
+      "My plants need emotional support right now.",
+      "I can't, I'm currently in a very committed relationship with my bed.",
+      "I'd say yes, but my schedule is booked with overthinking.",
+      "Sorry, I'm busy rearranging my sock drawer by color and thread count.",
+      "I have a prior engagement with a pizza and a streaming service.",
+      "My imaginary friend needs me today.",
+      "I can't — Mercury is in retrograde and I'm not taking any chances."
+    ];
+
+    let dodgeCount = parseInt(localStorage.getItem('dodgeCount') || '0', 10);
+    updateCounter();
+
+    function updateCounter() {
+      if (dodgeCount > 0) {
+        counter.textContent = `You've dodged ${dodgeCount} thing${dodgeCount === 1 ? '' : 's'} so far 🎯`;
+        counter.classList.add('visible');
+      }
+    }
+
+    function createCard(text, isError) {
+      const card = document.createElement('div');
+      card.className = 'excuse-card' + (isError ? ' error' : '');
+
+      const reason = document.createElement('div');
+      reason.className = 'reason';
+      reason.textContent = text;
+
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'copy-btn';
+      copyBtn.textContent = '📋';
+      copyBtn.title = 'Copy to clipboard';
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+          copyBtn.textContent = '✅';
+          setTimeout(() => { copyBtn.textContent = '📋'; }, 1500);
+        } catch {
+          copyBtn.textContent = '❌';
+          setTimeout(() => { copyBtn.textContent = '📋'; }, 1500);
+        }
+      });
+
+      card.appendChild(reason);
+      if (!isError) card.appendChild(copyBtn);
+
+      history.prepend(card);
+    }
 
     btn.addEventListener('click', async () => {
       btn.disabled = true;
       btn.textContent = '...';
-      card.classList.remove('show', 'error');
 
-      // Switch to thinking state
       emoji.className = 'emoji thinking';
       emoji.textContent = '🤔';
 
@@ -165,25 +261,21 @@
         if (!res.ok) throw new Error('Request failed');
         const data = await res.json();
 
-        reasonText.textContent = data.reason;
-        card.classList.remove('error');
+        createCard(data.reason, false);
+        dodgeCount++;
+        localStorage.setItem('dodgeCount', String(dodgeCount));
+        updateCounter();
       } catch {
-        reasonText.textContent = "Couldn\u2019t fetch a reason \u2014 try again!";
-        card.classList.add('error');
+        const excuse = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+        createCard(excuse, false);
+        dodgeCount++;
+        localStorage.setItem('dodgeCount', String(dodgeCount));
+        updateCounter();
       } finally {
         btn.disabled = false;
         btn.textContent = 'Say No';
-
-        // Back to happy state
         emoji.className = 'emoji happy';
         emoji.textContent = '🤗';
-
-        // show card with animation
-        card.classList.add('visible');
-        card.style.display = 'block';
-        // force reflow so transition re-triggers
-        void card.offsetWidth;
-        card.classList.add('show');
       }
     });
   </script>
