@@ -5,124 +5,244 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Say No</title>
   <style>
+    :root {
+      --bg: #F2F2F7;
+      --bg-elevated: rgba(255, 255, 255, 0.72);
+      --bg-card: rgba(255, 255, 255, 0.80);
+      --label: #1C1C1E;
+      --label-secondary: #636366;
+      --label-tertiary: #AEAEB2;
+      --separator: rgba(60, 60, 67, 0.13);
+      --red: #FF3B30;
+      --red-muted: rgba(255, 59, 48, 0.12);
+      --teal: #5AC8FA;
+      --ring-bg: rgba(60, 60, 67, 0.08);
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05);
+      --shadow-md: 0 2px 8px rgba(0,0,0,0.08), 0 12px 32px rgba(0,0,0,0.07);
+      --radius-card: 18px;
+      --radius-pill: 100px;
+      --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+    }
+
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
     }
 
     body {
       min-height: 100vh;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #fce4ec 0%, #e8eaf6 50%, #e0f7fa 100%);
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      padding: 2rem;
+      background: var(--bg);
+      font-family: var(--font);
+      padding: 24px 20px 40px;
+      color: var(--label);
     }
 
-    .container {
-      text-align: center;
-      max-width: 480px;
+    /* ── Dynamic Island pill ── */
+    .island {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--label);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      padding: 8px 16px;
+      border-radius: var(--radius-pill);
+      margin-bottom: 40px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+      user-select: none;
+    }
+
+    .island-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--red);
+      box-shadow: 0 0 6px var(--red);
+      flex-shrink: 0;
+    }
+
+    .island-dot.idle {
+      background: #30D158;
+      box-shadow: 0 0 6px #30D158;
+    }
+
+    /* ── Ring + button area ── */
+    .ring-wrap {
+      position: relative;
+      width: 220px;
+      height: 220px;
+      margin-bottom: 32px;
+      flex-shrink: 0;
+    }
+
+    .ring-svg {
       width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+      overflow: visible;
     }
 
-    .emoji {
-      font-size: 5rem;
-      margin-bottom: 0.5rem;
-      transition: transform 0.3s ease;
+    .ring-track {
+      fill: none;
+      stroke: var(--ring-bg);
+      stroke-width: 8;
+      stroke-linecap: round;
     }
 
-    /* Default: happy, bouncy wave */
-    .emoji.happy {
-      animation: bounce 1.5s ease-in-out infinite;
+    .ring-progress {
+      fill: none;
+      stroke: var(--red);
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 598;
+      stroke-dashoffset: 598;
+      transition: stroke-dashoffset 0.9s cubic-bezier(0.34, 1.2, 0.64, 1);
     }
 
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0) rotate(0deg); }
-      30% { transform: translateY(-12px) rotate(6deg); }
-      60% { transform: translateY(-4px) rotate(-4deg); }
+    .ring-progress.loading {
+      stroke: var(--teal);
+      animation: spin-arc 1s linear infinite;
     }
 
-    /* Thinking: slow rock + shrink */
-    .emoji.thinking {
-      animation: think 1.2s ease-in-out infinite;
-    }
-
-    @keyframes think {
-      0%, 100% { transform: rotate(0deg) scale(1); }
-      25% { transform: rotate(10deg) scale(0.95); }
-      50% { transform: rotate(-5deg) scale(1.02); }
-      75% { transform: rotate(8deg) scale(0.97); }
-    }
-
-    h1 {
-      font-size: 1.5rem;
-      color: #546e7a;
-      font-weight: 400;
-      margin-bottom: 2rem;
-      letter-spacing: 0.02em;
+    @keyframes spin-arc {
+      0%   { stroke-dashoffset: 460; transform: rotate(0deg); transform-origin: center; transform-box: fill-box; }
+      100% { stroke-dashoffset: 460; transform: rotate(360deg); transform-origin: center; transform-box: fill-box; }
     }
 
     .btn-no {
-      background: linear-gradient(135deg, #ff1744, #d500f9, #651fff);
-      color: #fff;
-      border: none;
-      width: 140px;
-      height: 140px;
-      font-size: 1.4rem;
-      font-weight: 700;
+      position: absolute;
+      inset: 18px;
       border-radius: 50%;
+      border: none;
+      background: #fff;
       cursor: pointer;
-      box-shadow: 0 8px 32px rgba(213, 0, 249, 0.45), 0 0 60px rgba(255, 23, 68, 0.2);
-      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
-      letter-spacing: 0.04em;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.9);
+      transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  box-shadow 0.18s ease;
+      user-select: none;
     }
 
     .btn-no:hover {
-      transform: scale(1.1);
-      box-shadow: 0 10px 40px rgba(213, 0, 249, 0.55), 0 0 80px rgba(255, 23, 68, 0.3);
+      transform: scale(1.06);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.10), 0 20px 48px rgba(0,0,0,0.09), inset 0 1px 0 rgba(255,255,255,0.9);
     }
 
     .btn-no:active {
-      transform: scale(0.95);
-      box-shadow: 0 4px 16px rgba(213, 0, 249, 0.35);
+      transform: scale(0.94);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.9);
     }
 
     .btn-no:disabled {
-      opacity: 0.7;
       cursor: not-allowed;
       transform: none;
     }
 
-    .history {
-      margin-top: 2rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      max-height: 50vh;
-      overflow-y: auto;
-      padding: 0 0.25rem;
+    .btn-icon {
+      font-size: 2.6rem;
+      line-height: 1;
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    .history::-webkit-scrollbar {
-      width: 4px;
+    .btn-no:not(:disabled):hover .btn-icon {
+      transform: scale(1.1) rotate(-8deg);
     }
+
+    .btn-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--label-secondary);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    /* ── Stats row ── */
+    .stats {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+      max-width: 360px;
+      margin-bottom: 28px;
+    }
+
+    .stat-tile {
+      flex: 1;
+      background: var(--bg-elevated);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-radius: var(--radius-card);
+      padding: 14px 16px;
+      box-shadow: var(--shadow-sm);
+      border: 0.5px solid var(--separator);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .stat-tile.visible {
+      opacity: 1;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--label);
+      line-height: 1.1;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--label-tertiary);
+      font-weight: 500;
+      margin-top: 3px;
+      letter-spacing: 0.01em;
+    }
+
+    /* ── History ── */
+    .history {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      max-width: 360px;
+      max-height: 46vh;
+      overflow-y: auto;
+      padding: 2px 2px 4px;
+    }
+
+    .history::-webkit-scrollbar { width: 3px; }
     .history::-webkit-scrollbar-thumb {
-      background: rgba(0,0,0,0.15);
+      background: var(--separator);
       border-radius: 2px;
     }
 
     .excuse-card {
-      background: rgba(255, 255, 255, 0.75);
-      backdrop-filter: blur(8px);
-      border-radius: 14px;
-      padding: 1rem 1.2rem;
+      background: var(--bg-card);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-radius: var(--radius-card);
+      padding: 14px 14px 14px 18px;
       text-align: left;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      box-shadow: var(--shadow-sm);
+      border: 0.5px solid var(--separator);
+      border-left: 3px solid var(--red);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
       opacity: 0;
-      transform: translateY(12px) scale(0.97);
-      animation: cardIn 0.4s ease forwards;
+      transform: translateY(10px) scale(0.98);
+      animation: cardIn 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
       position: relative;
     }
 
@@ -130,67 +250,109 @@
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
+    .card-body {
+      flex: 1;
+      min-width: 0;
+    }
+
     .excuse-card .reason {
-      font-size: 1.05rem;
-      line-height: 1.6;
-      font-style: italic;
-      color: #546e7a;
+      font-size: 15px;
+      line-height: 1.55;
+      color: var(--label);
+      font-weight: 400;
+      margin-right: 28px;
+    }
+
+    .card-time {
+      font-size: 11px;
+      color: var(--label-tertiary);
+      margin-top: 5px;
       font-weight: 500;
-      margin-right: 2rem;
+      letter-spacing: 0.02em;
     }
 
     .excuse-card .copy-btn {
-      position: absolute;
-      top: 0.7rem;
-      right: 0.7rem;
-      background: none;
+      flex-shrink: 0;
+      background: var(--bg);
       border: none;
       cursor: pointer;
-      font-size: 1.1rem;
-      opacity: 0.4;
-      transition: opacity 0.2s, transform 0.15s;
-      padding: 0.2rem;
+      font-size: 13px;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.55;
+      transition: opacity 0.2s, transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  background 0.15s;
+      margin-top: 1px;
     }
 
     .excuse-card .copy-btn:hover {
       opacity: 1;
-      transform: scale(1.15);
+      transform: scale(1.12);
+      background: #E5E5EA;
+    }
+
+    .excuse-card.error {
+      border-left-color: #FF9F0A;
     }
 
     .excuse-card.error .reason {
-      color: #e57373;
-      font-style: normal;
-    }
-
-    .counter {
-      margin-top: 1.2rem;
-      font-size: 0.85rem;
-      color: #90a4ae;
-      opacity: 0;
-      transition: opacity 0.4s ease;
-    }
-
-    .counter.visible {
-      opacity: 1;
+      color: var(--label-secondary);
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="emoji happy" id="emoji">🤗</div>
-    <h1>Need an excuse? We got you.</h1>
 
-    <button class="btn-no" id="sayNoBtn">Say No</button>
-
-    <div class="counter" id="counter"></div>
-    <div class="history" id="history"></div>
+  <!-- Dynamic Island pill -->
+  <div class="island" id="island">
+    <span class="island-dot idle" id="islandDot"></span>
+    <span id="islandText">Focus Session · Ready</span>
   </div>
 
+  <!-- Pomodoro-style ring + centre button -->
+  <div class="ring-wrap">
+    <svg class="ring-svg" viewBox="0 0 200 200" aria-hidden="true">
+      <circle class="ring-track" cx="100" cy="100" r="95"/>
+      <circle class="ring-progress" id="ringProgress" cx="100" cy="100" r="95"/>
+    </svg>
+    <button class="btn-no" id="sayNoBtn" aria-label="Get an excuse to say no">
+      <span class="btn-icon" id="btnIcon">🙅</span>
+      <span class="btn-label">Say No</span>
+    </button>
+  </div>
+
+  <!-- Stats tiles -->
+  <div class="stats">
+    <div class="stat-tile" id="statTotal">
+      <div class="stat-value" id="statTotalVal">0</div>
+      <div class="stat-label">Total Dodges</div>
+    </div>
+    <div class="stat-tile" id="statSession">
+      <div class="stat-value" id="statSessionVal">0</div>
+      <div class="stat-label">This Session</div>
+    </div>
+  </div>
+
+  <!-- Excuse history -->
+  <div class="history" id="history"></div>
+
   <script>
-    const btn = document.getElementById('sayNoBtn');
-    const history = document.getElementById('history');
-    const counter = document.getElementById('counter');
-    const emoji = document.getElementById('emoji');
+    const btn          = document.getElementById('sayNoBtn');
+    const btnIcon      = document.getElementById('btnIcon');
+    const historyEl    = document.getElementById('history');
+    const ringProgress = document.getElementById('ringProgress');
+    const islandDot    = document.getElementById('islandDot');
+    const islandText   = document.getElementById('islandText');
+    const statTotal    = document.getElementById('statTotal');
+    const statSession  = document.getElementById('statSession');
+    const statTotalVal    = document.getElementById('statTotalVal');
+    const statSessionVal  = document.getElementById('statSessionVal');
+
+    const RING_CIRC = 2 * Math.PI * 95; // ≈ 596.9
+    const MAX_RING  = 10; // fill ring over 10 dodges
 
     const fallbacks = [
       "I'd love to, but I have a very important meeting with my couch.",
@@ -210,28 +372,57 @@
       "I can't — Mercury is in retrograde and I'm not taking any chances."
     ];
 
-    let dodgeCount = parseInt(localStorage.getItem('dodgeCount') || '0', 10);
-    updateCounter();
+    let dodgeCount   = parseInt(localStorage.getItem('dodgeCount') || '0', 10);
+    let sessionCount = 0;
 
-    function updateCounter() {
+    function updateStats() {
+      statTotalVal.textContent   = dodgeCount;
+      statSessionVal.textContent = sessionCount;
+
       if (dodgeCount > 0) {
-        counter.textContent = `You've dodged ${dodgeCount} thing${dodgeCount === 1 ? '' : 's'} so far 🎯`;
-        counter.classList.add('visible');
+        statTotal.classList.add('visible');
+        statSession.classList.add('visible');
+        islandText.textContent = `Focus Session · ${dodgeCount} dodge${dodgeCount === 1 ? '' : 's'}`;
       }
+
+      // Ring fill: clamp to MAX_RING, loop around every MAX_RING dodges
+      const progress = (dodgeCount % MAX_RING) / MAX_RING;
+      const offset   = RING_CIRC * (1 - progress);
+      ringProgress.style.strokeDasharray  = RING_CIRC;
+      ringProgress.style.strokeDashoffset = offset;
+    }
+
+    function timeAgo(ts) {
+      const diff = Math.floor((Date.now() - ts) / 1000);
+      if (diff < 5)  return 'just now';
+      if (diff < 60) return `${diff}s ago`;
+      return `${Math.floor(diff / 60)}m ago`;
     }
 
     function createCard(text, isError) {
+      const ts   = Date.now();
       const card = document.createElement('div');
       card.className = 'excuse-card' + (isError ? ' error' : '');
+
+      const body = document.createElement('div');
+      body.className = 'card-body';
 
       const reason = document.createElement('div');
       reason.className = 'reason';
       reason.textContent = text;
 
+      const timeEl = document.createElement('div');
+      timeEl.className = 'card-time';
+      timeEl.textContent = 'just now';
+      setInterval(() => { timeEl.textContent = timeAgo(ts); }, 15000);
+
+      body.appendChild(reason);
+      body.appendChild(timeEl);
+
       const copyBtn = document.createElement('button');
       copyBtn.className = 'copy-btn';
-      copyBtn.textContent = '📋';
       copyBtn.title = 'Copy to clipboard';
+      copyBtn.textContent = '📋';
       copyBtn.addEventListener('click', async () => {
         try {
           await navigator.clipboard.writeText(text);
@@ -243,39 +434,45 @@
         }
       });
 
-      card.appendChild(reason);
+      card.appendChild(body);
       if (!isError) card.appendChild(copyBtn);
 
-      history.prepend(card);
+      historyEl.prepend(card);
     }
+
+    // Init
+    ringProgress.style.strokeDasharray  = RING_CIRC;
+    ringProgress.style.strokeDashoffset = RING_CIRC;
+    updateStats();
 
     btn.addEventListener('click', async () => {
       btn.disabled = true;
-      btn.textContent = '...';
+      btnIcon.textContent = '⏳';
 
-      emoji.className = 'emoji thinking';
-      emoji.textContent = '🤔';
+      // Loading state: spinning teal arc
+      ringProgress.classList.add('loading');
+      islandDot.classList.remove('idle');
+      islandText.textContent = 'Crafting your excuse…';
 
       try {
         const res = await fetch('https://naas.isalman.dev/no');
         if (!res.ok) throw new Error('Request failed');
         const data = await res.json();
-
         createCard(data.reason, false);
-        dodgeCount++;
-        localStorage.setItem('dodgeCount', String(dodgeCount));
-        updateCounter();
       } catch {
         const excuse = fallbacks[Math.floor(Math.random() * fallbacks.length)];
         createCard(excuse, false);
-        dodgeCount++;
-        localStorage.setItem('dodgeCount', String(dodgeCount));
-        updateCounter();
       } finally {
+        dodgeCount++;
+        sessionCount++;
+        localStorage.setItem('dodgeCount', String(dodgeCount));
+
+        ringProgress.classList.remove('loading');
+        updateStats();
+
         btn.disabled = false;
-        btn.textContent = 'Say No';
-        emoji.className = 'emoji happy';
-        emoji.textContent = '🤗';
+        btnIcon.textContent = '🙅';
+        islandDot.classList.add('idle');
       }
     });
   </script>
